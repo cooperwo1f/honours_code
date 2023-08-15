@@ -1,3 +1,5 @@
 build/
 .generated_files/
 dist/
+debug/
+disassembly/
