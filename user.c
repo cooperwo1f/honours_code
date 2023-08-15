@@ -47,6 +47,7 @@ void init() {
     //ADS1298R_init();
 }
 
+uint8_t i = 0;
 void run() {
-    debug("Hello, World! \n");
+    debug("%u", i++);
 }

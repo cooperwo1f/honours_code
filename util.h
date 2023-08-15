@@ -29,12 +29,6 @@ void delay(int ms) {
     delay_ms(ms);
 }
 
-//void write_packet(Packet packet) {
-//    for (size_t i = 0; i < sizeof(Packet); i++) {
-//        SPI_write(((uint32_t*)&packet)[i]);
-//    }
-//}
-
 uint32_t ESP_write(uint32_t data) {
     // Low-level SPI driver
     SPI2BUF = data;                 // Place data we want to send in SPI buffer
@@ -49,7 +43,7 @@ void ESP_write_4byte(uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4) {
 
 void ESP_write8(uint8_t data) {
     ESP_write_4byte(data, 0, 0, 0);
-    delay(10);
+    delay_us(4000);
 }
 
 void ESP_write_array(uint8_t *array, size_t len) {
@@ -84,26 +78,9 @@ void ESP_init() {
     SPI2CONbits.MSTEN = 1;      // Master Mode Enable
     SPI2CONbits.STXISEL = 0b01; // SPI Transmit Buffer Empty Interrupt Mode (generated when the buffer is completely empty)
     SPI2CONbits.SRXISEL = 0b11; // SPI Receive Buffer Full Interrupt Mode (generated when the buffer is full)
-    
-    // BRG = (F_PB / 2 * F_SCK) - 1
-    // For F_SCK = 48000 = 48kHz
-    // BRG = 832.333
-    SPI2BRG = 832;
-//    SPI2BRG = 50;
-
+    SPI2BRG = 50;
     SPI2CONbits.ON = 1;         // Configuration is done, turn on SPI2 peripheral
 }
-
-// Could add CRC using below link
-// http://www.ross.net/crc/download/crc_v3.txt
-
-// This implementation is flexible as it allows 16/32/64 bit values to be sent
-// Just change the values defined in the packet struct and mirror the change in the ESP32 code
-//void write_packet(Packet packet) {
-//    for (uint16_t i = 0; i < sizeof(Packet); i++) {
-//        SPI_write(((uint8_t*)&packet)[i]);
-//    }
-//}
 
 void write_packet(uint8_t* buf, size_t len) {
     uint8_t mod_table[] = {0, 2, 1};
@@ -136,12 +113,6 @@ void write_packet(uint8_t* buf, size_t len) {
     for (int i = 0; i < mod_table[len % 3]; i++) {
         encoded_data[output_length - 1 - i] = '=';
     }
-
-    // TODO: Using sprintf and sending everything as a single character string
-    // is probably a lot slower than it needs to be but it works for now...
-    // Slower because each call to SPI_write_array causes 10ms of delay()
-    // Also each 8 bit character is being sent using 32 bits
-    // as write array is optimised to send 4 bytes packed into a single word
 
     ESP_write_array(encoded_data, output_length);
     ESP_write8('\n');
