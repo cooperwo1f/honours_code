@@ -41,76 +41,15 @@
 // Use project enums instead of #define for ON and OFF.
 
 #include <xc.h>
-#include "sine.h"
+#include "user.h"
 
-#define SYS_FREQ 80000000           // Crystal is 25MHz / 5 * 16 = 80MHz
-#include "util.h"
-
-typedef struct {
-    uint8_t ECG;
-    uint8_t RESP;
-    uint8_t EMG;
-    uint8_t BPM;
-} Packet;
-
-// http://www.ross.net/crc/download/crc_v3.txt
-void SPI_packet(uint8_t *packet, uint16_t len) {
-    uint8_t CRC = 0;
-    
-    for (uint16_t i = 0; i < len; i++) {
-        SPI_write(packet[i]);
-    }
-    
-    SPI_write(CRC);
-}
-
-void IO_init() {
-    TRISBbits.TRISB2 = 0;       // Set ESP32 EN pin as output
-    PORTBbits.RB2 = 1;          // Set ESP32 EN pin high
-}
-
-void SPI_init() {
-    SPI2CONbits.ON = 0;         // Turn off SPI2 before configuring
-    SPI2CONbits.FRMEN = 0;      // Framed SPI Support (SS pin used)
-    SPI2CONbits.FRMSYNC = 0;    // Frame Sync Pulse Direction (pulse output, master mode)
-    SPI2CONbits.FRMPOL = 0;     // Slave Select Polarity (SS is active low)
-    SPI2CONbits.MSSEN = 1;      // Slave Select Enable (SS driven during transmission)
-    SPI2CONbits.FRMSYPW = 0;    // Frame Sync Pulse Width (frame sync pulse is one clock wide)
-    SPI2CONbits.FRMCNT = 0b000; // Frame Sync Pulse Counter (pulse on every data character)
-    SPI2CONbits.SPIFE = 0;      // Frame Sync Pulse Edge Select (frame sync precedes first bit)
-    SPI2CONbits.ENHBUF = 0;     // Enhanced Buffer Enable (disable enhanced buffer)
-    SPI2CONbits.SIDL = 1;       // Stop in Idle Mode
-    SPI2CONbits.DISSDO = 0;     // Disable SDOx (pin is controlled by this module)
-    SPI2CONbits.MODE32 = 0;     // Use 32-bit mode
-    SPI2CONbits.MODE16 = 0;     // Do not use 16-bit mode
-    SPI2CONbits.SMP = 0;        // Input data is sampled at the end of the clock signal
-    SPI2CONbits.CKE = 0;        // Data is shifted out/in on transition from idle (high) state to active (low) state
-    SPI2CONbits.SSEN = 1;       // Slave Select Enable (SS pin used by module)
-    SPI2CONbits.CKP = 1;        // Clock Polarity Select (clock signal is active low, idle state is high)
-    SPI2CONbits.MSTEN = 1;      // Master Mode Enable
-    SPI2CONbits.STXISEL = 0b01; // SPI Transmit Buffer Empty Interrupt Mode (generated when the buffer is completely empty)
-    SPI2CONbits.SRXISEL = 0b11; // SPI Receive Buffer Full Interrupt Mode (generated when the buffer is full)
-    SPI2BRG = 0;                // Set Baud Rate Generator to 0
-    SPI2CONbits.ON = 1;         // Configuration is done, turn on SPI2 peripheral
-}
-
-void init() {
-    IO_init();                  // turn on the ESP module EN
-    SPI_init();                 // configure SPI2 to communicate with ESP
-}
-
-uint8_t i = 0;
-
-void run() {
-    SPI_write(sine_wave[i++]);
-    delay_ms(20);
-}
-
-int main ( void ) {
+int main (void) {
     init();
     
     while (1) {
         run();
     }
-    
+
+    // Should never reach this
+    return 0;
 }
