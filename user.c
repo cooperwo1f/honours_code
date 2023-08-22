@@ -3,6 +3,7 @@
 
 #include "user.h"
 #include "util.h"
+#include "ESP32.h"
 #include "ADS1298R.h"
 
 struct {
@@ -13,13 +14,12 @@ struct {
 } packet;
 
 void init() {
-    IO_init();
-    ESP_init();
+    ESP32_init();
     ADS1298R_init();
 }
 
 void run() {
-    uint8_t id = read_register(ID);
-    debug("ID: %u \n", id);
-    delay(500);
+    while (!data_ready()) {
+        debug("%u", read_data());
+    }
 }
