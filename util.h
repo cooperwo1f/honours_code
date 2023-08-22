@@ -43,7 +43,7 @@ void ESP_write_4byte(uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4) {
 
 void ESP_write8(uint8_t data) {
     ESP_write_4byte(data, 0, 0, 0);
-    delay_us(4000);
+    delay(5);
 }
 
 void ESP_write_array(uint8_t *array, size_t len) {
