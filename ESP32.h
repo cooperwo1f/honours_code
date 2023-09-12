@@ -11,7 +11,10 @@ uint32_t ESP32_SPI_write(uint32_t data) {
     // Low-level SPI driver
     SPI2BUF = data;                 // Place data we want to send in SPI buffer
     while(!SPI2STATbits.SPITBE);    // Wait until sent status bit is cleared
-    return SPI2BUF;                 // Read data from buffer to clear it
+    uint32_t read = SPI2BUF;        // Read data from buffer to clear it
+    
+    delay_us(5000);
+    return read;
 }
 
 void ESP32_SPI_write_4byte(uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4) {
@@ -21,7 +24,6 @@ void ESP32_SPI_write_4byte(uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4) {
 
 void ESP32_SPI_write8(uint8_t data) {
     ESP32_SPI_write_4byte(data, 0, 0, 0);
-    delay(5);
 }
 
 void ESP32_SPI_write_array(uint8_t *array, size_t len) {
@@ -85,12 +87,7 @@ void ESP32_IO_init() {
 void ESP32_SPI_init() {
     SPI2CONbits.ON = 0;         // Turn off SPI2 before configuring
     SPI2CONbits.FRMEN = 0;      // Framed SPI Support (SS pin used)
-    SPI2CONbits.FRMSYNC = 0;    // Frame Sync Pulse Direction (pulse output, master mode)
-    SPI2CONbits.FRMPOL = 0;     // Slave Select Polarity (SS is active low)
     SPI2CONbits.MSSEN = 1;      // Slave Select Enable (SS driven during transmission)
-    SPI2CONbits.FRMSYPW = 1;    // Frame Sync Pulse Width (frame sync pulse is one clock wide)
-    SPI2CONbits.FRMCNT = 0b101; // Frame Sync Pulse Counter (pulse on every data character)
-    SPI2CONbits.SPIFE = 0;      // Frame Sync Pulse Edge Select (frame sync precedes first bit)
     SPI2CONbits.ENHBUF = 0;     // Enhanced Buffer Enable (disable enhanced buffer)
     SPI2CONbits.SIDL = 1;       // Stop in Idle Mode
     SPI2CONbits.DISSDO = 0;     // Disable SDOx (pin is controlled by this module)

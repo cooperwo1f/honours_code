@@ -6,8 +6,8 @@
                    projectFiles="true">
       <itemPath>user.h</itemPath>
       <itemPath>util.h</itemPath>
-      <itemPath>ADS1298R.h</itemPath>
       <itemPath>ESP32.h</itemPath>
+      <itemPath>ADS1294R.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -244,7 +244,6 @@
         <property key="UART6" value="true"/>
         <property key="USB" value="true"/>
         <property key="debugoptions.useswbreakpoints" value="true"/>
-        <property key="firmware.download.all" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="false"/>

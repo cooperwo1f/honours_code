@@ -13,11 +13,11 @@
 #pragma config FVBUSONIO = ON           // USB VBUS ON Selection (Controlled by USB Module)
 
 // DEVCFG2
-#pragma config FPLLIDIV = DIV_5         // PLL Input Divider (5x Divider)
+#pragma config FPLLIDIV = DIV_10        // PLL Input Divider (10x Divider)
 #pragma config FPLLMUL = MUL_16         // PLL Multiplier (16x Multiplier)
 #pragma config UPLLIDIV = DIV_6         // USB PLL Input Divider (6x Divider)
 #pragma config UPLLEN = ON              // USB PLL Enable (Enabled)
-#pragma config FPLLODIV = DIV_1         // System PLL Output Clock Divider (PLL Divide by 1)
+#pragma config FPLLODIV = DIV_8         // System PLL Output Clock Divider (PLL Divide by 8)
 
 // DEVCFG1
 #pragma config FNOSC = PRIPLL           // Oscillator Selection Bits (Primary Osc w/PLL (XT+,HS+,EC+PLL))
