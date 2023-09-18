@@ -81,6 +81,19 @@
 
 #define CS_DELAY 0
 
+
+/* Channel data struct */
+typedef struct {
+    uint32_t HEAD:24;
+    uint32_t CH1:24;
+    uint32_t CH2:24;
+    uint32_t CH3:24;
+    uint32_t CH4:24;
+} ChannelData;
+
+#define THREE_BYTE(B1, B2, B3) ((B1 << 16) | (B2 << 8) | B3)
+
+
 /* Low-level driver */
 
 uint8_t ADS1294R_write(uint8_t data) {
@@ -217,24 +230,29 @@ void ADS1294R_init() {
     // Write config registers
     write_register(CONFIG1, 0x86);  // 500 samples/s
     delay(1);
-//    debug("CONFIG1: expected 0xC6 actual 0x%02x", read_register(CONFIG1));
     write_register(CONFIG2, 0x00);  // Test signals disabled
     delay(1);
-//    debug("CONFIG2: expected 0x00 actual 0x%02x", read_register(CONFIG2));
     write_register(CONFIG3, 0xC0);  // Enable internal reference buffer, no RLD
     delay(1);
-//    debug("CONFIG3: expected 0xC0 actual 0x%02x", read_register(CONFIG3));
 
     // Send Read Data Continuous command
-//    ADS1294R_write(START);
-//    delay(1);
-//    ADS1294R_write(RDATAC);
+    write_cmd(START);
     delay(1);
-//    START_PIN = 1;
+    write_cmd(RDATAC);
+    delay(1);
 }
 
-uint8_t read_data() {
-    return ADS1294R_read();
+void read_data(ChannelData* ch) {
+    CS_PIN = 0;
+    
+    ADS1294R_read();    // read once to clear out previous buffer
+    ch->HEAD = THREE_BYTE(ADS1294R_read(), ADS1294R_read(), ADS1294R_read());
+    ch->CH1 = THREE_BYTE(ADS1294R_read(), ADS1294R_read(), ADS1294R_read());
+    ch->CH2 = THREE_BYTE(ADS1294R_read(), ADS1294R_read(), ADS1294R_read());
+    ch->CH3 = THREE_BYTE(ADS1294R_read(), ADS1294R_read(), ADS1294R_read());
+    ch->CH4 = THREE_BYTE(ADS1294R_read(), ADS1294R_read(), ADS1294R_read());
+    
+    CS_PIN = 1;
 }
 
 uint8_t data_ready() {

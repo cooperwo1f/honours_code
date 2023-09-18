@@ -3,6 +3,19 @@
 
 #include <xc.h>
 
+// Print 8-bit binary number using printf
+// usage: debug("NUM: "BYTE_TO_BINARY_PATTERN, BYTE_TO_BINARY(binary_number));
+#define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
+#define BYTE_TO_BINARY(byte)  \
+  ((byte) & 0x80 ? '1' : '0'), \
+  ((byte) & 0x40 ? '1' : '0'), \
+  ((byte) & 0x20 ? '1' : '0'), \
+  ((byte) & 0x10 ? '1' : '0'), \
+  ((byte) & 0x08 ? '1' : '0'), \
+  ((byte) & 0x04 ? '1' : '0'), \
+  ((byte) & 0x02 ? '1' : '0'), \
+  ((byte) & 0x01 ? '1' : '0')
+
 // SYS_FREQ = CRYSTAL_FREQ / 10 * 16 / 8
 //#define SYS_FREQ 5000000
 

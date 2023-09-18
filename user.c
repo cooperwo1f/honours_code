@@ -14,6 +14,8 @@ struct {
     uint32_t BPM:16;
 } packet;
 
+ChannelData ch;
+
 void init() {
 //    ADC_init();
     ESP32_init();
@@ -21,6 +23,16 @@ void init() {
 }
 
 void run() {
-    uint8_t id = read_register(ID);
-    debug("ID: %u \n", id);
+    if (data_ready()) {
+        read_data(&ch);
+        debug(
+            "HEADER: 0x%06X \n"
+            "CH1: %u \n"
+            "CH2: %u \n"
+            "CH3: %u \n"
+            "CH4: %u \n",
+            ch.HEAD, ch.CH1, ch.CH2, ch.CH3, ch.CH4
+        );
+    }
+    delay(500);
 }
