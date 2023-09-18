@@ -18,6 +18,7 @@
 // Controls
 #define DRDY_PIN PORTDbits.RD7
 #define CLKSEL_PIN PORTDbits.RD8
+#define CS_PIN PORTDbits.RD9
 #define START_PIN PORTDbits.RD10
 
 
@@ -78,6 +79,7 @@
 #define BYTES_PER_CHANNEL 3
 #define BYTES_TO_READ (NUMBER_OF_CHANNELS * BYTES_PER_CHANNEL)
 
+#define CS_DELAY 0
 
 /* Low-level driver */
 
@@ -85,14 +87,17 @@ uint8_t ADS1294R_write(uint8_t data) {
     // Low-level SPI driver
     SPI3BUF = (uint32_t)data;           // Place data we want to send in SPI buffer
     while(!SPI3STATbits.SPITBE);        // Wait until sent status bit is cleared
-    uint8_t read = (uint8_t)SPI3BUF;    // Read data from buffer to clear it
-
-    delay_us(80000);
-    return read;
+    return (uint8_t)SPI3BUF;            // Read data from buffer to clear it
 }
 
 uint8_t ADS1294R_read() {
-    return ADS1294R_write(0);
+    return ADS1294R_write(0x00);
+}
+
+void write_cmd(uint8_t cmd) {
+    CS_PIN = 0;
+    ADS1294R_write(cmd);
+    CS_PIN = 1;
 }
 
 /* Register drivers */
@@ -101,26 +106,31 @@ uint8_t read_register(uint8_t reg) {
     static uint8_t read_register_cmd = 0x20;
     static uint8_t read_register_mask = 0x1F;
     
-    uint8_t first_byte = 0x20 | (reg & 0x1F);
+    uint8_t first_byte = read_register_cmd | (reg & read_register_mask);
     uint8_t second_byte = 0x00; // only ever read a single register
     
+    CS_PIN = 0;
     ADS1294R_write(first_byte);
     ADS1294R_write(second_byte);
-    
-    return ADS1294R_read();
+    ADS1294R_read();
+    uint8_t ret = ADS1294R_read();
+    CS_PIN = 1;
+
+    return ret;
 }
 
 void write_register(uint8_t reg, uint8_t data) {
     static uint8_t write_register_cmd = 0x40;
     static uint8_t write_register_mask = 0x1F;
     
-    uint8_t first_byte = 0x40 | (reg & 0x1F);
+    uint8_t first_byte = write_register_cmd | (reg & write_register_mask);
     uint8_t second_byte = 0x00; // only ever write a single register
     
+    CS_PIN = 0;
     ADS1294R_write(first_byte);
     ADS1294R_write(second_byte);
-    
     ADS1294R_write(data);
+    CS_PIN = 1;
 }
 
 
@@ -134,6 +144,7 @@ void ADS1294R_GPIO_init() {
     
     TRISDbits.TRISD7 = 1;       // nDRDY as input   -  Pin 55
     TRISDbits.TRISD8 = 0;       // CLKSEL as output -  Pin 42
+    TRISDbits.TRISD9 = 0;       // CS as output     -  Pin 43
     TRISDbits.TRISD10 = 0;      // START as output  -  Pin 44
     
     TP6_PIN = 0;
@@ -141,13 +152,14 @@ void ADS1294R_GPIO_init() {
     TP8_PIN = 0;
     
     CLKSEL_PIN = 0;
+    CS_PIN = 1;
     START_PIN = 0;
 }
 
 void ADS1294R_SPI_init() {
     SPI3CONbits.ON = 0;         // Turn off SPI2 before configuring
     SPI3CONbits.FRMEN = 0;      // Framed SPI Support (SS pin used)
-    SPI3CONbits.MSSEN = 1;      // Slave Select Enable (SS driven during transmission)
+    SPI3CONbits.MSSEN = 0;      // Slave Select Enable (SS driven during transmission)
     SPI3CONbits.ENHBUF = 0;     // Enhanced Buffer Enable (disable enhanced buffer)
     SPI3CONbits.SIDL = 1;       // Stop in Idle Mode
     SPI3CONbits.DISSDO = 0;     // Disable SDOx (pin is controlled by this module)
@@ -163,7 +175,7 @@ void ADS1294R_SPI_init() {
     // CKP = 1; high is idle, low is active... CKP = 0; low is idle, high is active
     SPI3CONbits.CKP = 0;
     
-    SPI3CONbits.SSEN = 1;       // Slave Select Enable (SS pin used by module)
+    SPI3CONbits.SSEN = 0;       // Slave Select Enable (SS pin used by module)
     SPI3CONbits.MSTEN = 1;      // Master Mode Enable
     SPI3CONbits.STXISEL = 0b01; // SPI Transmit Buffer Empty Interrupt Mode (generated when the buffer is completely empty)
     SPI3CONbits.SRXISEL = 0b11; // SPI Receive Buffer Full Interrupt Mode (generated when the buffer is full)
@@ -193,26 +205,32 @@ void ADS1294R_init() {
     CLKSEL_PIN = 1;
     delay(1);
     
-    ADS1294R_write(RESET);
+    write_cmd(RESET);
     delay(1);
 
-//    // Send Stop Data Continuous command
-//    ADS1294R_write(SDATAC);
-//    delay(1);
-//    
+    // Send Stop Data Continuous command
+    write_cmd(SDATAC);
+    delay(1);
+    
 //    write_register(GPIO, 0b11110000);
-//
-//    // Write config registers
-//    write_register(CONFIG1, 0x86);  // 500 samples/s
+
+    // Write config registers
+    write_register(CONFIG1, 0x86);  // 500 samples/s
+    delay(1);
 //    debug("CONFIG1: expected 0xC6 actual 0x%02x", read_register(CONFIG1));
-//    write_register(CONFIG2, 0x00);  // Test signals disabled
+    write_register(CONFIG2, 0x00);  // Test signals disabled
+    delay(1);
 //    debug("CONFIG2: expected 0x00 actual 0x%02x", read_register(CONFIG2));
-//    write_register(CONFIG3, 0xC0);  // Enable internal reference buffer, no RLD
+    write_register(CONFIG3, 0xC0);  // Enable internal reference buffer, no RLD
+    delay(1);
 //    debug("CONFIG3: expected 0xC0 actual 0x%02x", read_register(CONFIG3));
-//
-//    // Send Read Data Continuous command
+
+    // Send Read Data Continuous command
+//    ADS1294R_write(START);
+//    delay(1);
 //    ADS1294R_write(RDATAC);
-    ADS1294R_write(START);
+    delay(1);
+//    START_PIN = 1;
 }
 
 uint8_t read_data() {

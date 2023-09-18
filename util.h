@@ -26,4 +26,20 @@ void delay(int ms) {
     delay_ms(ms);
 }
 
+void ADC_init() {
+    AD1CON1bits.ADSIDL = 0;
+    AD1CON1bits.SIDL = 0;
+    AD1CON1bits.ASAM = 1;   // auto sampling
+    AD1CON1bits.CLRASAM = 0; // overwrite buffer
+    AD1CON1bits.FORM = 0b000; // integer 16-bit output
+    AD1CON1bits.SSRC = 0b111; // auto convert
+    AD1CON1bits.ADON = 1;
+    AD1CON1bits.ON = 1;
+    AD1CON1bits.SAMP = 1;
+    
+    AD1CHSbits.CH0SA = 0b1111;
+    AD1CHSbits.CH0NA = 0;
+    AD1CHSbits.CH0SB = 0b0000;
+    AD1CHSbits.CH0NB = 0;
+}
 #endif // _UTIL_H_
